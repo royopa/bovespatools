@@ -59,10 +59,10 @@ ibov_assets = ['VALE3', 'VALE5', 'GOAU4', 'USIM5', 'CSNA3', 'SLED4', 'GOLL4',
                'RUMO3', 'CSAN3', 'HGTX3', 'VVAR11', 'LREN3', 'LAME4', 'KLBN11',
                'SUZB5', 'FIBR3', 'EMBR3', 'MRFG3', 'ECOR3', 'CCRO3', 'PETR4',
                'PETR3', 'BRKM5', 'KROT3', 'ESTC3', 'ABEV3', 'CESP6', 'CMIG4',
-               'ELPL4', 'CSMG3', 'SBSP3', 'HYPE3', 'SMLE3', 'ENEV3', 'TIMP3',
-               'OIBR3', 'VIVR3', 'RENT3', 'JBSS3', 'BRFS3', 'QUAL3', 'NATU3',
-               'ALSC3', 'BRPR3', 'CYRE3', 'EZTC3', 'GFSA3', 'TCSA3', 'RSID3',
-               'IGTA3', 'BRML3', 'MILS3', 'AGRO3',
+               'ELPL4', 'CSMG3', 'SBSP3', 'HYPE3', 'SMLE3', 'TIMP3', 'OIBR3',
+               'VIVR3', 'RENT3', 'JBSS3', 'BRFS3', 'QUAL3', 'NATU3', 'ALSC3',
+               'BRPR3', 'CYRE3', 'EZTC3', 'GFSA3', 'TCSA3', 'RSID3', 'IGTA3',
+               'BRML3', 'MILS3', 'AGRO3',
                ]
 
 def key_press(event):
