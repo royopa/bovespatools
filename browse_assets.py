@@ -7,6 +7,7 @@ from trademodel import Company, Asset, SpotMarket
 from matplotlib.dates import num2date, date2num
 import datetime
 import numpy as np
+import time
 
 class DataCursor(object):
     text_template = 'x: %s\ny: %0.2f'
@@ -53,6 +54,8 @@ class DataCursor(object):
     pass
 
 current_asset = 0
+update_view = False
+close_requested = False
 ibov_assets = ['VALE3', 'VALE5', 'GOAU4', 'USIM5', 'CSNA3', 'SLED4', 'GOLL4',
                'ITSA4', 'ITUB4', 'SANB11', 'BBAS3', 'BRSR6', 'BBSE3', 'BVMF3',
                'CIEL3', 'WEGE3', 'POMO3', 'TUPY3', 'RAPT4', 'MYPK3', 'RLOG3',
@@ -66,7 +69,7 @@ ibov_assets = ['VALE3', 'VALE5', 'GOAU4', 'USIM5', 'CSNA3', 'SLED4', 'GOLL4',
                ]
 
 def key_press(event):
-    global args, current_asset, ibov_assets
+    global update_view, current_asset, ibov_assets, close_requested
     if event.key == 'right':
         if current_asset < len(ibov_assets)-1:
             current_asset += 1
@@ -77,8 +80,10 @@ def key_press(event):
             current_asset -= 1
         else:
             current_asset = len(ibov_assets)-1
+    elif event.key == 'escape':
+        close_requested = True
 
-    plot_with_lines(ibov_assets[current_asset], int(args.num_days))
+    update_view = True
 
 
 fig = None
@@ -89,84 +94,93 @@ def plot_with_lines(asset_code, last_days = 0):
     from matplotlib import gridspec
     from sqlalchemy import and_
 
-    global fig
+    global fig, update_view, close_requested
 
-    if fig is None:
-        fig = plt.figure() 
-        plt.connect('key_press_event', key_press)
+    # Enable interactive mode so that draw() is non-blocking
+    plt.ion()
+
+    fig = plt.figure() 
+    plt.connect('key_press_event', key_press)
 
     fig.clf()
 
     dbsession = model.get_session()
 
-    base_date = datetime.now().date() - timedelta(days=last_days)
-    trade_query = dbsession.query(SpotMarket).join(Asset).\
-                  order_by(SpotMarket.date.desc()).\
-                  filter(and_(Asset.code == asset_code,
-                      SpotMarket.date >= base_date))
+    while not close_requested:
+        base_date = datetime.now().date() - timedelta(days=last_days)
+        trade_query = dbsession.query(SpotMarket).join(Asset).\
+                      order_by(SpotMarket.date.desc()).\
+                      filter(and_(Asset.code == asset_code,
+                          SpotMarket.date >= base_date))
 
-    trade_days = trade_query.all()[::-1]
+        trade_days = trade_query.all()[::-1]
 
-    if len(trade_days) == 0:
-        return False
+        if len(trade_days) == 0:
+            return False
 
-    open_prices = [day.opening_price/100.0 for day in trade_days]
-    high_data = [day.max_price/100.0 for day in trade_days]
-    low_data = [day.min_price/100.0 for day in trade_days]
-    close_prices = [day.last_price/100.0 for day in trade_days]
-    volumes = [day.volume for day in trade_days]
-    dates = [date2num(day.date) for day in trade_days]
+        open_prices = [day.opening_price/100.0 for day in trade_days]
+        high_data = [day.max_price/100.0 for day in trade_days]
+        low_data = [day.min_price/100.0 for day in trade_days]
+        close_prices = [day.last_price/100.0 for day in trade_days]
+        volumes = [day.volume for day in trade_days]
+        dates = [date2num(day.date) for day in trade_days]
 
-    gs = gridspec.GridSpec(3, 1, height_ratios=[3, 3, 1])
-    volume_plot = plt.subplot(gs[2])
-    plt.xticks(rotation=30)
+        gs = gridspec.GridSpec(3, 1, height_ratios=[3, 3, 1])
+        volume_plot = plt.subplot(gs[2])
+        plt.xticks(rotation=30)
 
-    line_plot = plt.subplot(gs[1], sharex=volume_plot)
-    candle_plot = plt.subplot(gs[0], sharex=volume_plot)
+        line_plot = plt.subplot(gs[1], sharex=volume_plot)
+        candle_plot = plt.subplot(gs[0], sharex=volume_plot)
 
-    line_plot.tick_params(axis='x',          # changes apply to the x-axis
-                          which='both',      # both major and minor ticks are affected
-                          bottom='off',      # ticks along the bottom edge are off
-                          top='off',         # ticks along the top edge are off
-                          labelbottom='off')
+        line_plot.tick_params(axis='x',          # changes apply to the x-axis
+                              which='both',      # both major and minor ticks are affected
+                              bottom='off',      # ticks along the bottom edge are off
+                              top='off',         # ticks along the top edge are off
+                              labelbottom='off')
 
-    # Adjust xticks
-    volume_plot.xaxis_date()
-    plt.setp(candle_plot.get_xticklabels(), visible=False)
+        # Adjust xticks
+        volume_plot.xaxis_date()
+        plt.setp(candle_plot.get_xticklabels(), visible=False)
 
-    plt.subplots_adjust(bottom=0.15)
+        plt.subplots_adjust(bottom=0.15)
 
-    quotes = []
-    for i in xrange(len(dates)):
-        quotes.append((dates[i], open_prices[i], close_prices[i], high_data[i], low_data[i]))
-        pass
+        quotes = []
+        for i in xrange(len(dates)):
+            quotes.append((dates[i], open_prices[i], close_prices[i], high_data[i], low_data[i]))
+            pass
 
-    # Plot lines
-    line_plot.plot([quote[0] for quote in quotes], [quote[2] for quote in quotes])
+        # Plot lines
+        line_plot.plot([quote[0] for quote in quotes], [quote[2] for quote in quotes])
 
-    # Plot candlesticks
-    candle = candlestick_ochl(candle_plot, quotes)
+        # Plot candlesticks
+        candle = candlestick_ochl(candle_plot, quotes)
 
-    # Clickable data points
-    plt.connect('pick_event', DataCursor(plt.gca(), dates, quotes))
-    for line in candle[0]:
-        line.set_picker(5) 
+        # Clickable data points
+        plt.connect('pick_event', DataCursor(plt.gca(), dates, quotes))
+        for line in candle[0]:
+            line.set_picker(5) 
 
-    plt.gcf().canvas.set_window_title(asset_code)
+        plt.gcf().canvas.set_window_title(asset_code)
 
-    volume_bars = volume_plot.bar(dates, volumes, width=0.25, align='center')
-    plt.margins(x=0.05, y=0.05)
+        volume_bars = volume_plot.bar(dates, volumes, width=0.25, align='center')
+        plt.margins(x=0.05, y=0.05)
 
-    # TODO: Clickable data points for volume_bars
+        # TODO: Clickable data points for volume_bars
 
-    # Hoverable data points
-    """
-    cursor = DataCursor(plt.gca(), dates, quotes)
-    plt.connect('motion_notify_event', cursor.pin_cursor)
-    """
+        # Hoverable data points
+        """
+        cursor = DataCursor(plt.gca(), dates, quotes)
+        plt.connect('motion_notify_event', cursor.pin_cursor)
+        """
 
-    plt.show()
-    fig.canvas.draw()
+        plt.show()
+        fig.canvas.draw()
+
+        while not update_view:
+            fig.canvas.get_tk_widget().update()
+
+        update_view = False
+        asset_code = ibov_assets[current_asset]
 
     return True
 
