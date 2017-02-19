@@ -1,6 +1,6 @@
 import sqlalchemy
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, String, Date, SmallInteger
+from sqlalchemy import Integer, Float, String, Date, SmallInteger, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine
@@ -20,8 +20,19 @@ class Asset(Base):
     bdi = Column(SmallInteger, primary_key = True)
     # Asset symbols may transition from one company to another
     company_id = Column(Integer, ForeignKey('company.id'), primary_key = True)
+    isin = Column(String(12))
     company = relationship(Company)
     pass
+
+class AssetActions(Base):
+    __tablename__ = 'asset_actions'
+    asset_code = Column(String(12), ForeignKey('asset.code'), primary_key = True)
+    action_type = Column(String(13), primary_key = True)
+    ex_date = Column(Date, primary_key = True)
+    approval_date = Column(Date)
+    factor = Column(Float)
+    issued_asset = Column(String(12))
+    remarks = Column(Text)
 
 class SpotMarket(Base):
     __tablename__ = 'spot_market'
@@ -36,9 +47,7 @@ class SpotMarket(Base):
     best_sell_offer_price = Column(Integer)
     volume = Column(Integer)
     asset = relationship(Asset)
-    # Due to grouping and splitting, assets can have their prices artificially changed
-    price_factor_quotient = Column(Integer)
-    price_factor_dividend = Column(Integer)
+    price_factor = Column(Integer)
     pass
 
 engine = create_engine('sqlite:///'+database_file)

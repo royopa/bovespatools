@@ -37,6 +37,7 @@ def parse_file(fhandle):
         total_negotiations = int(line[147:152]) # ?
         total_asset_negotiations = int(line[152:170]) # ?
         asset_negotiation_volume = int(line[170:188]) # ?
+        asset_isin_code = line[230:242]
 
         if market_type != 10:
             # We only deal with spot market
@@ -54,8 +55,10 @@ def parse_file(fhandle):
                          Asset,
                          {'primary_keys':
                             dict(code = asset_code,
-                            bdi = asset_bdi,
-                            company = company)
+                                 bdi = asset_bdi,
+                                 company = company),
+                          'regular_keys':
+                            dict(isin = asset_isin_code)
                          })
 
         # Create trade day
