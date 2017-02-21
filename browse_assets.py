@@ -8,6 +8,7 @@ from matplotlib.dates import num2date, date2num
 import datetime
 import numpy as np
 import time
+from favourite_assets import favourite_assets
 
 class DataCursor(object):
     text_template = 'x: %s\ny: %0.2f'
@@ -56,22 +57,11 @@ class DataCursor(object):
 current_asset = 0
 update_view = False
 close_requested = False
-ibov_assets = ['VALE3', 'VALE5', 'GOAU4', 'USIM5', 'CSNA3', 'SLED4', 'GOLL4',
-               'ITSA4', 'ITUB4', 'SANB11', 'BBAS3', 'BRSR6', 'BBSE3', 'BVMF3',
-               'CIEL3', 'WEGE3', 'POMO3', 'TUPY3', 'RAPT4', 'MYPK3', 'RLOG3',
-               'RUMO3', 'CSAN3', 'HGTX3', 'VVAR11', 'LREN3', 'LAME4', 'KLBN11',
-               'SUZB5', 'FIBR3', 'EMBR3', 'MRFG3', 'ECOR3', 'CCRO3', 'PETR4',
-               'PETR3', 'BRKM5', 'KROT3', 'ESTC3', 'ABEV3', 'CESP6', 'CMIG4',
-               'ELPL4', 'CSMG3', 'SBSP3', 'HYPE3', 'SMLE3', 'TIMP3', 'OIBR3',
-               'VIVR3', 'RENT3', 'JBSS3', 'BRFS3', 'QUAL3', 'NATU3', 'ALSC3',
-               'BRPR3', 'CYRE3', 'EZTC3', 'GFSA3', 'TCSA3', 'RSID3', 'IGTA3',
-               'BRML3', 'MILS3', 'AGRO3',
-               ]
 
 def key_press(event):
-    global update_view, current_asset, ibov_assets, close_requested
+    global update_view, current_asset, close_requested
     if event.key == 'right':
-        if current_asset < len(ibov_assets)-1:
+        if current_asset < len(favourite_assets)-1:
             current_asset += 1
         else:
             current_asset = 0
@@ -79,7 +69,7 @@ def key_press(event):
         if current_asset > 0:
             current_asset -= 1
         else:
-            current_asset = len(ibov_assets)-1
+            current_asset = len(favourite_assets)-1
     elif event.key == 'escape':
         close_requested = True
 
@@ -180,7 +170,7 @@ def plot_with_lines(asset_code, last_days = 0):
             fig.canvas.get_tk_widget().update()
 
         update_view = False
-        asset_code = ibov_assets[current_asset]
+        asset_code = favourite_assets[current_asset]['code']
 
     return True
 
@@ -190,5 +180,5 @@ arg_parser.add_argument('-n', dest='num_days', help='Number of trade days', defa
 args = arg_parser.parse_args()
 
 
-if not plot_with_lines(ibov_assets[current_asset], int(args.num_days)):
+if not plot_with_lines(favourite_assets[current_asset]['code'], int(args.num_days)):
     print('Could not find any data for the asset '+args.asset_code.upper())

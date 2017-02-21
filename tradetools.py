@@ -14,6 +14,8 @@ def parse_file(fhandle):
     ending_line = len(fcontent) - 1
 
     dbsession = model.get_session()
+    companyCache = {}
+    assetCache = {}
 
     for line in range(1, ending_line):
         line = fcontent[line]
@@ -44,22 +46,30 @@ def parse_file(fhandle):
             continue
 
         # Create company, if it's new
-        company = model.get_or_create(
-                           dbsession,
-                           Company,
-                           {'primary_keys': dict(short_name = short_company_name)})
+        if not short_company_name in companyCache:
+            company = model.get_or_create(
+                               dbsession,
+                               Company,
+                               {'primary_keys': dict(short_name = short_company_name)})
+            companyCache[short_company_name] = company
+        else:
+            company = companyCache[short_company_name]
 
         # Create asset, if it's new
-        asset = model.get_or_create(
-                         dbsession,
-                         Asset,
-                         {'primary_keys':
-                            dict(code = asset_code,
-                                 bdi = asset_bdi,
-                                 company = company),
-                          'regular_keys':
-                            dict(isin = asset_isin_code)
-                         })
+        if not (asset_code+`asset_bdi`) in assetCache:
+            asset = model.get_or_create(
+                             dbsession,
+                             Asset,
+                             {'primary_keys':
+                                dict(code = asset_code,
+                                     bdi = asset_bdi,
+                                     company = company),
+                              'regular_keys':
+                                dict(isin = asset_isin_code)
+                             })
+            assetCache[asset_code+`asset_bdi`] = asset
+        else:
+            asset = assetCache[asset_code+`asset_bdi`]
 
         # Create trade day
         spot_market = model.get_or_create(
@@ -76,13 +86,11 @@ def parse_file(fhandle):
                                 last_price = last_price,
                                 best_buy_offer_price = best_buy_offer_price,
                                 best_sell_offer_price = best_sell_offer_price,
-                                volume = asset_negotiation_volume,
-                                price_factor_quotient=1,
-                                price_factor_dividend=1)
+                                volume = asset_negotiation_volume)
                              })
         pass
 
-    dbsession.commit()
+    #dbsession.commit()
 
     """
     sample_spot_market = dbsession.query(SpotMarket).join(Asset).\
