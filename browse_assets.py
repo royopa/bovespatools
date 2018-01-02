@@ -181,4 +181,4 @@ args = arg_parser.parse_args()
 
 
 if not plot_with_lines(favourite_assets[current_asset]['code'], int(args.num_days)):
-    print('Could not find any data for the asset '+args.asset_code.upper())
+    print('Could not find any data for the asset '+favourite_assets[current_asset]['code'])

@@ -90,7 +90,7 @@ def parse_file(fhandle):
                              })
         pass
 
-    #dbsession.commit()
+    dbsession.commit()
 
     """
     sample_spot_market = dbsession.query(SpotMarket).join(Asset).\

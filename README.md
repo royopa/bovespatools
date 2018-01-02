@@ -12,6 +12,6 @@ A set of tools for crawling the Bovespa stock exchange data, and plotting charts
 
 Install the following libraries in order to use the bovespatools:
 
-	sudo apt-get install libpython-dev
-	sudo pip install sqlalchemy
-	sudo pip install matplotlib
+	sudo apt-get install python-pip libpython-dev python-tk
+	pip install sqlalchemy
+	pip install matplotlib
